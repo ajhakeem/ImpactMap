@@ -67,48 +67,6 @@ class Map {
         }
   }
 
-    /**
-    * Load all projects that meet the filter requirements. 
-    *
-    */
-    public function load_projects($filters = array()) {
-      $defaults = array(
-          'limit' => 250,
-          'minLat' => -85,
-          'maxLat' => 85,
-          'minLng' => -180,
-          'maxLng' => 180,
-          'cid' => '0'
-      );
-      $filters = array_merge($defaults, $filters);
-
-      $results = NULL;
-      $sql = "SELECT pid, lat, lng, title FROM Projects WHERE lat >= :minLat AND lat <= :maxLat AND lng >= :minLng AND lng <= :maxLng AND visible = true
-              LIMIT :limit";
-      try {
-          $stmt = $this->_db->prepare($sql);
-          $stmt -> bindParam(':limit', $filters['limit'], PDO::PARAM_INT);
-          $stmt -> bindParam(':minLat', $filters['minLat'], PDO::PARAM_STR);
-          $stmt -> bindParam(':maxLat', $filters['maxLat'], PDO::PARAM_STR);
-          $stmt -> bindParam(':minLng', $filters['minLng'], PDO::PARAM_STR);
-          $stmt -> bindParam(':maxLng', $filters['maxLng'], PDO::PARAM_STR);
-          //$stmt -> bindParam(':cid', $filters['cid'], PDO::PARAM_INT);
-          $stmt -> execute();
-
-          while ($row = $stmt -> fetch()) {
-              $results[] = array('pid' => (int) $row[0],
-                                 'lat' => (float) $row[1],
-                                 'lng' => (float) $row[2],
-                                 'title' => utf8_encode($row[3])
-                                );
-          }
-      } catch(PDOException $e) {
-          echo $e -> getMessage();
-          return NULL;
-      }
-
-      return $results;
-  }
 
   /**
   * Return a list of all the projects found in the database
@@ -209,19 +167,7 @@ class Map {
         }
     }
 
-        /**
-     * Returns all entries in the database as a 2D associative array.
-     *
-     * @param $filters array  A list of filter options:
-     *                          limit: max number of entries to fetch, default 100
-     *                          minLat: min latitude
-     *                          maxLat: max latitude
-     *                          minLng: min longitude
-     *                          maxLng: max longitude
-     *                          category: category
-     *
-     * @return array          A list of entries with associative index being the column names
-     */
+
 
     /**
      * Removes an individual entry from the database. Returns if operation was successful.
@@ -274,7 +220,7 @@ class Map {
      */
     public function load_project_details($pid) {
         $pid = intval($pid);
-        $sql = "SELECT * FROM Projects WHERE pid=:pid LIMIT 1";
+        $sql = "SELECT * FROM Projects LEFT JOIN Centers ON Projects.cid=Centers.cid  WHERE pid=:pid LIMIT 1";
         try {
             $stmt = $this->_db->prepare($sql);
             $stmt -> bindParam(":pid", $pid, PDO::PARAM_INT);
@@ -888,6 +834,59 @@ class Map {
             return FALSE;
         }
         return TRUE;
+    }
+
+
+    /**
+     * Returns projects with given parameters
+     *
+     * @param $filters array  A list of filter options:
+     *                          center (int): -1 means all
+     *                          type (int): -1 means all
+     *                          status (int): -1 means all
+     *                          start (string): empty means all
+     *                          end (string): empty means all
+     *
+     * @return array          A list of projects with columns: pid, title, lat, lng
+     */
+    public function load_projects($filters = array()) {
+        $defaults = array(
+            'center' => -1,
+            'type' => -1,
+            'status' => -1,
+            'start' => '',
+            'end' => ''
+        );
+        $filters = array_merge($defaults, $filters);
+
+        $results = NULL;
+        $sql = "SELECT pid, lat, lng, title FROM Projects WHERE visible = true AND
+                  cid = ISNULL(:cid, cid) AND type = ISNULL(:type, type) AND status = ISNULL(:status, status) AND
+                  startDate>=:start AND endDate<=:end";
+        try {
+            $cid = ($filters['center'] == -1) ? NULL : intval($filters['center']);
+            $type = ($filters['type'] == -1) ? NULL : intval($filters['type']);
+            $status = ($filters['status'] == -1) ? NULL : intval($filters['status']);
+            $start = empty($filters['start']) ? '1900-01-01' : date('Y-m-d', strtotime($filters['end']));
+            $end = empty($filters['end']) ? date('Y-m-d') : date('Y-m-d', strtotime($filters['end']));
+
+            $stmt = $this->_db->prepare($sql);
+            $stmt -> bindParam(":cid", $cid, PDO::PARAM_INT);
+            $stmt -> bindParam(":type", $type, PDO::PARAM_INT);
+            $stmt -> bindParam(":status", $status, PDO::PARAM_INT);
+            $stmt -> bindParam(":start", $start, PDO::PARAM_STR);
+            $stmt -> bindParam(":end", $end, PDO::PARAM_STR);
+            $stmt -> execute();
+
+            while ($row = $stmt -> fetch()) {
+                $results[] = $row;
+            }
+        } catch(PDOException $e) {
+            echo $e -> getMessage();
+            return NULL;
+        }
+
+        return $results;
     }
 
 
