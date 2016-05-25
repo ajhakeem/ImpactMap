@@ -1,7 +1,7 @@
 var map;
 var markers = [];
 
-var test = false;
+var test = true;
 
 /** 
 * Called when the web page is loaded. Initializes the search suggestion engine and readies the search bar for queries.
@@ -60,56 +60,7 @@ $(document).ready(function () {
         });
     }
   });
-
-    $('#filter-button').click(function (event) {
-        event.preventDefault();                         //Prevents button default event
-        var projectCenter = $('#centers').val();        //Default: -1 (all)
-        var projectType = $('#project-type').val();     //Default: -1 (all)
-        var projectStatus = $("#project-status").val(); //Default: -1 (all)
-        var startDate = $('#start-date').val();         //Default: empty (all)
-        var endDate = $('#end-date').val();             //Default: empty (all)
-
-        $.ajax ({
-            type: 'POST',
-            url: '../php/map/filter.php',
-            data: {
-                center: projectCenter,
-                type: projectType,
-                status: projectStatus,
-                start: startDate,
-                end: endDate
-            },
-            dataType: json,
-            success: function(data) {
-                //Do stuff here... data is JSON with keys: 'pid', 'title', 'lat', 'lng'
-
-            },
-            complete: function() {
-                $('#filter-modal').hide();          //Close the filter modal after code runs
-            }
-        });
-    });
 });
-
-//Shows lightbox, call this function when map marker is clicked. Parameters is the project ID
-function lightboxPopup(pid) {
-    $.ajax ({
-        type: 'POST',
-        url: '../php/map/get_project.php',
-        data: {
-            pid: pid
-        },
-        dataType: json,
-        success: function(data) {
-            //Do stuff here... data is in JSON with same column names as Projects table
-
-        },
-        complete: function() {
-
-        }
-    })
-}
-
 
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
@@ -183,6 +134,25 @@ function loadTestProjects() {
       var marker = new google.maps.Marker({
         position: latLng
       });
+      var infoWindow = new google.maps.InfoWindow({
+        position: latLng,
+        content: dataPhoto.title
+        });
+
+      marker.addListener('click', function() {
+        map.setZoom(12);
+        map.setCenter(this.getPosition());
+        startLB();
+      });
+
+      marker.addListener('mouseover', function() {
+        infoWindow.open(map,this);
+      });
+
+      marker.addListener('mouseout', function() {
+        infoWindow.close();
+      })
+
       markers.push(marker);
   }
   clusterMarkers();
@@ -196,13 +166,13 @@ function loadProjects() {
     data: {},
     data_type: "json",
     // On a successful request, populate the map with markers for each project and add user click interactions
-    success: function(data) {
+   success: function(data) {
       var projects = JSON.parse(data);
       projects.forEach(function(project) {
         var marker = new google.maps.Marker({
                               position: {lat: project.lat, lng: project.lng},
                               map: map,
-                              title: project.title
+                              //title: project.title
         });
         markers.push(marker);
       });
@@ -222,4 +192,28 @@ function openSearch() {
 
 function closeSearch() {
   document.getElementById("search").style.width = "0%";
+}
+
+var contentString = "HELLO";
+
+function startLB() {    // start light box on click 
+  var lbBG = document.getElementById('lbBackground');
+  var lbFG = document.getElementById('lb');
+
+    lbBG.style.display = "block";
+    lbFG.style.display = "block";
+
+    var info = contentString;
+
+    document.getElementById('info1').innerHTML = info;
+}
+
+function dismissLB() {  // dismiss light box on clicking outside
+  var lbBG = document.getElementById('lbBackground');
+  var lbFG = document.getElementById('lb');
+
+    lbBG.style.display = "none";
+    lbFG.style.display = "none";
+
+    document.getElementById('info1').innerHTML = "";
 }
