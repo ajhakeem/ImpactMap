@@ -182,7 +182,7 @@ function loadProjects() {
 }
 
 function clusterMarkers() {
-   var markerCluster = new MarkerClusterer(map, markers, {imagePath: "../img/map/m"});
+   var markerCluster = new MarkerClusterer(map, markers, {imagePath: "./img/map/m"});
 }
 
 
