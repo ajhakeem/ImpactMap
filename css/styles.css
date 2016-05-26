@@ -31,18 +31,50 @@ html, body {
 }
 
 #lb {
-  top: 17.5%;
-  left: 17.5%;
-  height: 65%;
-  width: 65%;
+  top: 12.5%;
+  left: 7.5%;
+  height: 75%;
+  width: 85%;
   position: absolute;
   display: none;
   background-color: black;
 }
 
-p {
-    text-align: center;
-    color: white;
+#lbL3 {
+  padding-top: 10px;
+  left: 0%;
+  width: 33%;
+  height: 100%;
+  background-color: #242426;
+  display: inline-block;
+  vertical-align: top;
+}
+
+#lbM3 {
+  padding-top: 10px;
+  left: 33%;
+  width: 33%;
+  height: 100%;
+  background-color: #242426;
+  display: inline-block;
+  vertical-align: top;
+}
+
+#lbR3 {
+  padding-top: 10px;
+  left: 66%;
+  width: 33%;
+  height: 100%;
+  background-color: #242426;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.lbList {
+  color: white;
+  font-size: 18px;
+  list-style-type: none;
+
 }
 
 img {
